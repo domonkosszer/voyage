@@ -1,7 +1,9 @@
 ---
 import Base from "../layouts/Base.astro"
+import Navbar from "../components/Navbar.astro"
 ---
-<Base title="RunClub">
+<Base title="Voyage">
+  <Fragment slot="nav"><Navbar transparent /></Fragment>
   <section
     class="relative min-h-screen bg-fixed bg-cover bg-center text-white flex items-center"
     style="background-image: url('/hero.jpg');"

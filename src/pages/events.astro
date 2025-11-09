@@ -1,6 +1,8 @@
 ---
 import Base from "../layouts/Base.astro"
 import { getCollection } from "astro:content"
+import Navbar from "../components/Navbar.astro"
+
 
 // Load & index events
 const events = await getCollection("events").then(list =>
@@ -44,6 +46,7 @@ const monthLabel = firstOfMonth.toLocaleDateString(undefined, { month: "long", y
 const weekdayLabels = ["Mon","Tue","Wed","Thu","Fri","Sat","Sun"]
 ---
 <Base title={`Events | ${monthLabel}`}>
+  <Fragment slot="nav"><Navbar /></Fragment>
   <section class="bg-gradient-to-b from-gray-50 to-white">
     <div class="mx-auto max-w-6xl px-4 pt-8 pb-16">
       <!-- Header -->

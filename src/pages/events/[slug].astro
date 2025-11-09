@@ -8,20 +8,66 @@ export async function getStaticPaths() {
 }
 
 const { event } = Astro.props
-const { Content } = await event.render() // this lets you render the markdown body
+const { Content } = await event.render()
+
+const d = new Date(event.data.date)
+const dateLong = d.toLocaleDateString(undefined, {
+  weekday: "long",
+  year: "numeric",
+  month: "long",
+  day: "numeric",
+})
+const img = event.data.image ?? "/event-default.jpg"
 ---
 <Base title={`${event.data.title} | RunClub`} description={event.data.description}>
-  <article class="prose max-w-none mx-auto px-4 py-10">
-    <h1 class="mb-2">{event.data.title}</h1>
-    <p class="text-sm text-gray-600 mb-4">
-      {new Date(event.data.date).toLocaleDateString()}
-      {event.data.city && ` · ${event.data.city}`}
-    </p>
+  <section class="bg-gradient-to-b from-gray-50 to-white">
+    <div class="mx-auto max-w-3xl px-4 py-10">
+      <a href="/events" class="inline-flex items-center gap-2 text-sm text-gray-600 hover:text-gray-900 mb-4">
+        ← Back to calendar
+      </a>
 
-    {event.data.description && (
-      <p class="text-gray-700 mb-6">{event.data.description}</p>
-    )}
+      <article class="overflow-hidden rounded-3xl border border-gray-200 bg-white shadow-lg">
+        <!-- Banner -->
+        <div class="relative h-56 md:h-72">
+          <img src={img} alt={event.data.title} class="absolute inset-0 h-full w-full object-cover" />
+          <div class="absolute inset-0 bg-black/40"></div>
 
-    <Content />  {/* renders the markdown body */}
-  </article>
+          <div class="absolute bottom-4 left-4 right-4 flex flex-wrap items-center gap-2">
+            <span class="inline-flex items-center gap-2 rounded-full bg-white/90 px-3 py-1 text-sm font-medium shadow">
+              🗓️ {dateLong}
+            </span>
+            {event.data.city && (
+              <span class="inline-flex items-center gap-2 rounded-full bg-white/80 px-3 py-1 text-sm shadow">
+                📍 {event.data.city}
+              </span>
+            )}
+          </div>
+        </div>
+
+        <!-- Content -->
+        <div class="p-6 md:p-8">
+          <h1 class="text-3xl md:text-4xl font-extrabold tracking-tight mb-2">{event.data.title}</h1>
+
+          <div class="flex flex-wrap gap-3 text-sm text-gray-600 mb-4">
+            {event.data.time && <span>🕒 {event.data.time}</span>}
+            {event.data.distance && <span>📏 {event.data.distance}</span>}
+            {event.data.meeting_point && <span>📌 {event.data.meeting_point}</span>}
+          </div>
+
+          {event.data.description && (
+            <p class="text-gray-700 mb-6">{event.data.description}</p>
+          )}
+
+          <div class="space-y-4 leading-relaxed text-gray-800">
+            <Content />  {/* renders the markdown body */}
+          </div>
+
+          <div class="mt-8 flex flex-wrap gap-3">
+            <a href="/events" class="px-5 py-2 rounded-lg border hover:bg-gray-50">← All events</a>
+            <a href="#" class="px-5 py-2 rounded-lg bg-blue-600 text-white hover:bg-blue-700">Add to calendar</a>
+          </div>
+        </div>
+      </article>
+    </div>
+  </section>
 </Base>
