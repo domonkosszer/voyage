@@ -1,0 +1,21 @@
+---
+const { title = 'RunClub', description = 'We run together.' } = Astro.props
+---
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="description" content={description} />
+    <link rel="stylesheet" href="/src/styles/global.css" />
+    <title>{title}</title>
+  </head>
+  <body class="bg-white text-gray-900 antialiased">
+    <slot name="nav" />
+    <main class="p-0 m-0">
+      <slot />
+    </main>
+    <footer class="mt-16 border-t py-8 text-center text-sm text-gray-500">
+      © {new Date().getFullYear()} RunClub
+    </footer>
+  </body>
+</html>

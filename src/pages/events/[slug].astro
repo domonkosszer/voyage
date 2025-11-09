@@ -1,0 +1,27 @@
+---
+import Base from "../../layouts/Base.astro"
+import { getCollection } from "astro:content"
+
+export async function getStaticPaths() {
+  const events = await getCollection("events")
+  return events.map(e => ({ params: { slug: e.slug }, props: { event: e } }))
+}
+
+const { event } = Astro.props
+const { Content } = await event.render() // this lets you render the markdown body
+---
+<Base title={`${event.data.title} | RunClub`} description={event.data.description}>
+  <article class="prose max-w-none mx-auto px-4 py-10">
+    <h1 class="mb-2">{event.data.title}</h1>
+    <p class="text-sm text-gray-600 mb-4">
+      {new Date(event.data.date).toLocaleDateString()}
+      {event.data.city && ` · ${event.data.city}`}
+    </p>
+
+    {event.data.description && (
+      <p class="text-gray-700 mb-6">{event.data.description}</p>
+    )}
+
+    <Content />  {/* renders the markdown body */}
+  </article>
+</Base>

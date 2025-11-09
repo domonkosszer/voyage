@@ -1,0 +1,116 @@
+---
+import Base from "../layouts/Base.astro"
+import { getCollection } from "astro:content"
+
+// Load & index events
+const events = await getCollection("events").then(list =>
+  list.map(e => ({ ...e, key: new Date(e.data.date).toISOString().slice(0,10) }))
+)
+const eventsByDate = new Map<string, typeof events>()
+for (const e of events) (eventsByDate.get(e.key) ?? eventsByDate.set(e.key, []).get(e.key))!.push(e)
+
+// Month selection (?m=YYYY-MM)
+const url = new URL(Astro.request.url)
+const mParam = url.searchParams.get("m")
+const today = new Date()
+const [yr, mo] = mParam?.split("-").map(Number) ?? [today.getFullYear(), today.getMonth() + 1]
+const firstOfMonth = new Date(yr, mo - 1, 1)
+const lastOfMonth  = new Date(yr, mo, 0)
+
+// Build 6×7 grid starting Monday
+function startOfCalendarGrid(d: Date) {
+  const t = new Date(d)
+  const monIndex = (t.getDay() + 6) % 7
+  t.setDate(1 - monIndex)
+  t.setHours(0,0,0,0)
+  return t
+}
+const start = startOfCalendarGrid(firstOfMonth)
+const todayKey = new Date().toISOString().slice(0,10)
+
+const cells = Array.from({ length: 42 }, (_, i) => {
+  const d = new Date(start); d.setDate(start.getDate() + i)
+  const key = d.toISOString().slice(0,10)
+  const inMonth = d.getMonth() === (mo - 1)
+  const weekday = d.getDay() // 0 Sun, 6 Sat
+  const weekend = weekday === 0 || weekday === 6
+  return { date: d, key, inMonth, weekend, items: eventsByDate.get(key) ?? [] }
+})
+
+function toMonthStr(y: number, m: number) { return `${y}-${String(m).padStart(2,"0")}` }
+const prev = mo === 1 ? { y: yr - 1, m: 12 } : { y: yr, m: mo - 1 }
+const next = mo === 12 ? { y: yr + 1, m: 1 } : { y: yr, m: mo + 1 }
+const monthLabel = firstOfMonth.toLocaleDateString(undefined, { month: "long", year: "numeric" })
+const weekdayLabels = ["Mon","Tue","Wed","Thu","Fri","Sat","Sun"]
+---
+<Base title={`Events | ${monthLabel}`}>
+  <section class="bg-gradient-to-b from-gray-50 to-white">
+    <div class="mx-auto max-w-6xl px-4 pt-8 pb-16">
+      <!-- Header -->
+      <div class="mb-6 flex items-center justify-between gap-4">
+        <a href={`?m=${toMonthStr(prev.y, prev.m)}`} class="rounded-xl border px-3 py-2 hover:bg-gray-50 shadow-sm">← Prev</a>
+        <h1 class="text-3xl font-extrabold tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-blue-600 to-indigo-500">
+          {monthLabel}
+        </h1>
+        <a href={`?m=${toMonthStr(next.y, next.m)}`} class="rounded-xl border px-3 py-2 hover:bg-gray-50 shadow-sm">Next →</a>
+      </div>
+
+      <!-- Weekday header -->
+      <div class="grid grid-cols-7 text-xs md:text-sm text-gray-500 mb-2">
+        {weekdayLabels.map(w => <div class="px-2 py-1 font-medium">{w}</div>)}
+      </div>
+
+      <!-- Calendar grid -->
+      <div class="grid grid-cols-7 gap-3">
+        {cells.map(({ date, key, inMonth, weekend, items }) => {
+          const isToday = key === todayKey
+          const shown = items.slice(0, 2)
+          const more  = Math.max(0, items.length - shown.length)
+          return (
+            <div
+              class={`rounded-2xl border backdrop-blur bg-white/70 p-2 min-h-32 shadow-sm transition
+                      ${inMonth ? "border-gray-200" : "border-gray-100 text-gray-400"}
+                      ${weekend && inMonth ? "bg-gray-50/80" : ""}
+                      ${isToday ? "ring-2 ring-blue-300 border-blue-300" : "hover:shadow-md"}`}
+            >
+              <div class="flex items-center justify-between mb-1">
+                <span class={`text-sm ${inMonth ? "font-semibold text-gray-800" : "text-gray-400"}`}>
+                  {date.getDate()}
+                </span>
+                {items.length > 0 && (
+                  <span class="rounded-full bg-blue-600 text-white text-[10px] leading-3 px-2 py-1 shadow">
+                    {items.length}
+                  </span>
+                )}
+              </div>
+
+              <ul class="space-y-1 max-h-24 overflow-auto pr-1">
+                {shown.map(e => (
+                  <li>
+                    <a
+                      href={`/events/${e.slug}`}
+                      class="group flex items-center gap-2 truncate rounded-lg border border-gray-200/70 bg-white px-2 py-1 text-xs hover:border-blue-300 hover:bg-blue-50"
+                      title={e.data.title}
+                    >
+                      <span class="h-1.5 w-1.5 rounded-full bg-blue-600 group-hover:bg-blue-700"></span>
+                      <span class="truncate">{e.data.title}</span>
+                    </a>
+                  </li>
+                ))}
+                {more > 0 && (
+                  <li class="text-[11px] text-gray-500">+{more} more…</li>
+                )}
+              </ul>
+            </div>
+          )
+        })}
+      </div>
+
+      <div class="mt-6 flex items-center gap-3 text-xs text-gray-500">
+        <span class="inline-block h-2 w-2 rounded-full bg-blue-600"></span> Event
+        <span class="ml-4 rounded-full bg-blue-100 px-2 py-0.5 text-blue-700 ring-1 ring-blue-200">Today</span>
+        <span class="ml-4 text-gray-400">Weekend tint</span>
+      </div>
+    </div>
+  </section>
+</Base>
