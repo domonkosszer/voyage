@@ -1,0 +1,76 @@
+---
+const links = [
+  { href: '/', label: 'Home' },
+  { href: '/events', label: 'Events' },
+  { href: '/about', label: 'About' },
+]
+
+// Props: pass `transparent` on pages where the navbar sits over a hero image
+const { transparent = false } = Astro.props
+const pathname = Astro.url.pathname
+const isActive = (href: string) =>
+  pathname === href || (href !== '/' && pathname.startsWith(href))
+
+const shell =
+  transparent
+    ? 'absolute top-0 left-0 w-full z-20 text-white'
+    : 'sticky top-0 w-full z-20 bg-white/80 backdrop-blur border-b'
+const linkBase =
+  transparent
+    ? 'hover:text-white/80'
+    : 'hover:text-blue-600'
+---
+<nav class={shell}>
+  <div class="mx-auto max-w-6xl px-4 h-14 flex items-center justify-between">
+    <a href="/" class="font-bold text-xl tracking-tight">
+      VOY<span class={transparent ? 'text-blue-300' : 'text-blue-600'}>AGE</span>
+    </a>
+
+    <!-- Desktop -->
+    <ul class="hidden md:flex gap-6 text-sm">
+      {links.map(l => (
+        <li>
+          <a
+            href={l.href}
+            class={`${linkBase} ${isActive(l.href)
+              ? (transparent ? 'underline underline-offset-4 decoration-white/70' : 'text-blue-700')
+              : ''}`}
+          >
+            {l.label}
+          </a>
+        </li>
+      ))}
+    </ul>
+
+    <!-- Mobile toggle -->
+    <button id="nav-toggle" class="md:hidden inline-flex items-center gap-2 rounded-lg px-3 py-2 border/50 border-white/40">
+      ☰
+    </button>
+  </div>
+
+  <!-- Mobile menu -->
+  <div id="nav-menu" class={`md:hidden ${transparent ? 'bg-black/40 text-white' : 'bg-white'} px-4 pb-3 hidden`}>
+    <ul class="flex flex-col gap-2">
+      {links.map(l => (
+        <li>
+          <a
+            href={l.href}
+            class={`block rounded-lg px-3 py-2 ${linkBase} ${isActive(l.href)
+              ? (transparent ? 'bg-white/10' : 'bg-gray-100')
+              : ''}`}
+          >
+            {l.label}
+          </a>
+        </li>
+      ))}
+    </ul>
+  </div>
+</nav>
+
+<script>
+  document.addEventListener('DOMContentLoaded', () => {
+    const btn = document.getElementById('nav-toggle')
+    const menu = document.getElementById('nav-menu')
+    btn?.addEventListener('click', () => menu?.classList.toggle('hidden'))
+  })
+</script>
